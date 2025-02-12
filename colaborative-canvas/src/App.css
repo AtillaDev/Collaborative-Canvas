@@ -47,3 +47,6 @@ canvas {
   /* width: 100vw; */
 }
 
+.toolbar {
+  width: 50px;
+}
