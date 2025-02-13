@@ -1,17 +1,19 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Toolbar from './Toolbar';
 
 function Canvas() {
   const canvasRef = useRef(null);
-  const toolbarWidth = 50;
+  const paintingRef = useRef(false);
+  const [brushWidth, setBrushWidth] = useState(10);
+  const brushColorRef = useRef('green');
+  const toolbarWidth = 200;
 
   useEffect(() => {
-    let painting = false;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctxt = canvas.getContext('2d');
-    let brushSize = 10;
-    let brushColor = 'blue';
+    const brushColor = brushColorRef.current;
 
     function handleResize() {
       canvas.height = window.innerHeight;
@@ -19,8 +21,9 @@ function Canvas() {
     }
 
     function startPosition(e) {
-      painting = true;
-
+      paintingRef.current = true;
+      ctxt.lineWidth = brushWidth;
+      ctxt.fillStyle = brushColor;
       ctxt.beginPath();
       ctxt.arc(
         e.clientX - toolbarWidth,
@@ -35,13 +38,13 @@ function Canvas() {
       ctxt.moveTo(e.clientX - toolbarWidth, e.clientY);
     }
     function finishedPosition() {
-      painting = false;
+      paintingRef.current = false;
       ctxt.beginPath();
     }
 
     function draw(e) {
-      if (!painting) return;
-      ctxt.lineWidth = brushSize;
+      if (!paintingRef.current) return;
+      ctxt.lineWidth = brushWidth;
       ctxt.strokeStyle = brushColor;
       ctxt.lineCap = 'round';
 
@@ -63,16 +66,24 @@ function Canvas() {
       canvas.removeEventListener('mouseup', finishedPosition);
       canvas.removeEventListener('mousemove', draw);
     };
-  }, []);
+  }, [brushWidth]);
+
+  // Update brush width dynamically without triggering re-renders
+  function changeBrushSize(size) {
+    setBrushWidth(size);
+  }
 
   return (
-    <canvas
-      ref={canvasRef}
-      id="canvas"
-      width={window.innerWidth - toolbarWidth}
-      height={window.innerHeight}
-      aria-label="Drawing canvas"
-    />
+    <>
+      <Toolbar brushWidth={brushWidth} onBrushSizeChange={changeBrushSize} />
+      <canvas
+        ref={canvasRef}
+        id="canvas"
+        width={window.innerWidth - toolbarWidth}
+        height={window.innerHeight}
+        aria-label="Drawing canvas"
+      />
+    </>
   );
 }
 
