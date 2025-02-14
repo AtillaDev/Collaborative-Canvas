@@ -147,9 +147,30 @@ function Canvas() {
     });
   }
 
+  function saveDrawing() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataURL = canvas.toDataURL();
+    localStorage.setItem('savedDrawing', dataURL);
+  }
+
+  function loadDrawing() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctxt = canvas.getContext('2d');
+    const savedDrawing = localStorage.getItem('savedDrawing');
+    if (savedDrawing) {
+      const img = new Image();
+      img.src = savedDrawing;
+      img.onload = () => ctxt.drawImage(img, 0, 0);
+    }
+  }
+
   return (
     <>
       <Toolbar
+        onSave={saveDrawing}
+        onLoad={loadDrawing}
         brushSize={brushSize}
         brushColor={brushColor}
         onBrushSizeChange={changeBrushSize}

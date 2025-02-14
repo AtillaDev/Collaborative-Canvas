@@ -7,6 +7,8 @@ function Toolbar({
   onBrushColorChange,
   onClearCanvas,
   onUndo,
+  onSave,
+  onLoad,
 }) {
   return (
     <div style={{ padding: '10px', background: '#ccc' }}>
@@ -43,6 +45,15 @@ function Toolbar({
       <button onClick={onUndo} type="button" className="clear-btn">
         Undo
       </button>
+
+      <div className="store-btns">
+        <button onClick={onSave} type="button" className="clear-btn">
+          Save
+        </button>
+        <button onClick={onLoad} type="button" className="clear-btn">
+          Load
+        </button>
+      </div>
     </div>
   );
 }
@@ -55,6 +66,9 @@ Toolbar.propTypes = {
   onBrushColorChange: PropTypes.func.isRequired,
   onClearCanvas: PropTypes.func.isRequired,
   onUndo: PropTypes.func.isRequired,
+
+  onLoad: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
 };
 
 export default Toolbar;
