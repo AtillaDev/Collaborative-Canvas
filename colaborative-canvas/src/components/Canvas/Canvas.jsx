@@ -19,6 +19,7 @@ function Canvas() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    loadDrawing();
 
     function handleResize() {
       setCanvasSize({
@@ -166,6 +167,15 @@ function Canvas() {
     }
   }
 
+  function exportAsImage() {
+    const canvas = canvasRef.current;
+    const dataURL = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'drawing.png';
+    link.click();
+  }
+
   return (
     <>
       <Toolbar
@@ -177,6 +187,7 @@ function Canvas() {
         onBrushColorChange={changeBrushColor}
         onClearCanvas={clearCanvas}
         onUndo={undo} // Add Undo button
+        onExport={exportAsImage} // Download data for current drawing
       />
       <canvas
         ref={canvasRef}

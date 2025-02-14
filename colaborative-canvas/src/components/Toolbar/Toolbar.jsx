@@ -9,6 +9,7 @@ function Toolbar({
   onUndo,
   onSave,
   onLoad,
+  onExport,
 }) {
   return (
     <div style={{ padding: '10px', background: '#ccc' }}>
@@ -54,6 +55,10 @@ function Toolbar({
           Load
         </button>
       </div>
+
+      <button onClick={onExport} type="button">
+        Export
+      </button>
     </div>
   );
 }
@@ -69,6 +74,8 @@ Toolbar.propTypes = {
 
   onLoad: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
+
+  onExport: PropTypes.func.isRequired,
 };
 
 export default Toolbar;
