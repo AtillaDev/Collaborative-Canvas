@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Toolbar from '../Toolbar/Toolbar';
 
+const toolbarWidth = 160 + 21;
+
 function Canvas() {
   const canvasRef = useRef(null);
   const paintingRef = useRef(false);
@@ -8,30 +10,41 @@ function Canvas() {
   const [brushColor, setBrushColor] = useState('#000');
 
   const [strokeHistory, setStrokeHistory] = useState([]);
-  // let restoreIndex = -1;
-  const toolbarWidth = 200;
+
   const [canvasSize, setCanvasSize] = useState({
-    width: 0,
-    height: 0,
+    width: window.innerWidth - toolbarWidth,
+    height: window.innerHeight,
   });
+
+  // Resumes the users last saved drawing on launch
+  useEffect(() => {
+    loadDrawing();
+  }, []);
 
   // Resize canvas dynamically
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    loadDrawing();
+
+    const ctxt = canvas.getContext('2d');
+    let resizeTimeout;
 
     function handleResize() {
-      setCanvasSize({
-        width: window.innerWidth - toolbarWidth,
-        height: window.innerHeight,
-      });
+      clearTimeout(resizeTimeout);
+
+      resizeTimeout = setTimeout(() => {
+        const imageData = ctxt.getImageData(0, 0, canvas.width, canvas.height);
+        setCanvasSize({
+          width: window.innerWidth - toolbarWidth,
+          height: window.innerHeight,
+        });
+        ctxt.putImageData(imageData, 0, 0);
+      }, 200);
     }
-    handleResize();
 
     window.addEventListener('resize', handleResize);
-    canvas.addEventListener('contextmenu', (event) => {
-      event.preventDefault();
+    canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
     });
 
     // Clean up
@@ -41,7 +54,7 @@ function Canvas() {
         event.preventDefault();
       });
     };
-  }, []);
+  }, [canvasSize.width, canvasSize.height]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -117,6 +130,7 @@ function Canvas() {
     if (!canvas) return;
     const ctxt = canvas.getContext('2d');
     ctxt.clearRect(0, 0, canvas.width, canvas.height);
+    saveToHistory();
   }
 
   // Save the current canvas state to history using getImageData
@@ -158,6 +172,7 @@ function Canvas() {
   function loadDrawing() {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    clearCanvas();
     const ctxt = canvas.getContext('2d');
     const savedDrawing = localStorage.getItem('savedDrawing');
     if (savedDrawing) {
@@ -165,6 +180,7 @@ function Canvas() {
       img.src = savedDrawing;
       img.onload = () => ctxt.drawImage(img, 0, 0);
     }
+    // saveToHistory();
   }
 
   function exportAsImage() {

@@ -12,7 +12,7 @@ function Toolbar({
   onExport,
 }) {
   return (
-    <div style={{ padding: '10px', background: '#ccc' }}>
+    <div className="toolbar" style={{ padding: '10px', background: '#ccc' }}>
       {/* Brush size slider */}
       <label htmlFor="brushSize" className="brush-size-slider-label">
         Brush Size: {brushSize}

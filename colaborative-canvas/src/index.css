@@ -50,3 +50,7 @@ table {
   display: flex;
   flex-direction: row;
 }
+
+html {
+  overflow: hidden;
+}

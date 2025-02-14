@@ -43,10 +43,14 @@
 
 canvas {
   border: 2px solid black;
+  cursor: crosshair;
   /* height: 100vh; */
   /* width: 100vw; */
 }
 
 .toolbar {
-  width: 200px;
+  display: flex;
+  flex-direction: column;
+  width: 160px;
+  background-color: #ff2;
 }
