@@ -39,8 +39,39 @@ function Canvas() {
           height: window.innerHeight,
         });
         ctxt.putImageData(imageData, 0, 0);
-      }, 200);
+      }, 100);
     }
+
+    // HANDLE Resize 2
+    // function handleResize() {
+    //   const canvas = canvasRef.current;
+    //   if (!canvas) return;
+    //   const context = canvas.getContext('2d');
+
+    //   // Capture the drawing before resizing
+    //   const dataURL = canvas.toDataURL();
+
+    //   // Calculate new dimensions
+    //   const newWidth = window.innerWidth - toolbarWidth;
+    //   const newHeight = window.innerHeight;
+
+    //   // Update canvas size (this clears the canvas)
+    //   setCanvasSize({ width: newWidth, height: newHeight });
+    //   canvas.width = newWidth;
+    //   canvas.height = newHeight;
+
+    //   // Set a background if needed
+    //   context.fillStyle = '#fff';
+    //   context.fillRect(0, 0, newWidth, newHeight);
+
+    //   // Create an image and draw it to the canvas
+    //   const img = new Image();
+    //   img.src = dataURL;
+    //   img.onload = () => {
+    //     // Optionally, scale the image if new dimensions differ
+    //     context.drawImage(img, 0, 0, newWidth, newHeight);
+    //   };
+    // }
 
     window.addEventListener('resize', handleResize);
     canvas.addEventListener('contextmenu', (e) => {
