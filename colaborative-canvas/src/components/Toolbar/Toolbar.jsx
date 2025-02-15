@@ -47,6 +47,7 @@ function Toolbar({
         Undo
       </button>
 
+      {/* Save & Load btns */}
       <div className="store-btns">
         <button onClick={onSave} type="button" className="clear-btn">
           Save
@@ -56,6 +57,7 @@ function Toolbar({
         </button>
       </div>
 
+      {/* Export btn */}
       <button onClick={onExport} type="button">
         Export
       </button>

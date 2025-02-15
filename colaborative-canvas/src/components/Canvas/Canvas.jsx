@@ -1,118 +1,89 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Toolbar from '../Toolbar/Toolbar';
-
-const toolbarWidth = 160 + 21;
 
 function Canvas() {
   const canvasRef = useRef(null);
   const paintingRef = useRef(false);
+
   const [brushSize, setBrushSize] = useState(10);
   const [brushColor, setBrushColor] = useState('#000');
 
   const [strokeHistory, setStrokeHistory] = useState([]);
-
   const [canvasSize, setCanvasSize] = useState({
-    width: window.innerWidth - toolbarWidth,
-    height: window.innerHeight,
+    width: 0,
+    height: 0,
   });
 
-  // Resumes the users last saved drawing on launch
+  // Refs for brush properties so the dom dosent update unecesaraly
+  const brushSizeRef = useRef(brushSize);
+  const brushColorRef = useRef(brushColor);
+
   useEffect(() => {
-    loadDrawing();
-  }, []);
+    brushSizeRef.current = brushSize;
+  }, [brushSize]);
+
+  useEffect(() => {
+    brushColorRef.current = brushColor;
+  }, [brushColor]);
 
   // Resize canvas dynamically
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const observer = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      setCanvasSize({ width, height });
+    });
+
+    // Preserve drawing on resize
     const ctxt = canvas.getContext('2d');
-    let resizeTimeout;
-
-    function handleResize() {
-      clearTimeout(resizeTimeout);
-
-      resizeTimeout = setTimeout(() => {
-        const imageData = ctxt.getImageData(0, 0, canvas.width, canvas.height);
-        setCanvasSize({
-          width: window.innerWidth - toolbarWidth,
-          height: window.innerHeight,
-        });
-        ctxt.putImageData(imageData, 0, 0);
-      }, 100);
+    const currentImage = strokeHistory[strokeHistory.length - 1];
+    if (currentImage) {
+      ctxt.putImageData(currentImage, 0, 0);
     }
 
-    // HANDLE Resize 2
-    // function handleResize() {
-    //   const canvas = canvasRef.current;
-    //   if (!canvas) return;
-    //   const context = canvas.getContext('2d');
-
-    //   // Capture the drawing before resizing
-    //   const dataURL = canvas.toDataURL();
-
-    //   // Calculate new dimensions
-    //   const newWidth = window.innerWidth - toolbarWidth;
-    //   const newHeight = window.innerHeight;
-
-    //   // Update canvas size (this clears the canvas)
-    //   setCanvasSize({ width: newWidth, height: newHeight });
-    //   canvas.width = newWidth;
-    //   canvas.height = newHeight;
-
-    //   // Set a background if needed
-    //   context.fillStyle = '#fff';
-    //   context.fillRect(0, 0, newWidth, newHeight);
-
-    //   // Create an image and draw it to the canvas
-    //   const img = new Image();
-    //   img.src = dataURL;
-    //   img.onload = () => {
-    //     // Optionally, scale the image if new dimensions differ
-    //     context.drawImage(img, 0, 0, newWidth, newHeight);
-    //   };
-    // }
-
-    window.addEventListener('resize', handleResize);
+    observer.observe(canvas);
     canvas.addEventListener('contextmenu', (e) => {
       e.preventDefault();
     });
 
     // Clean up
     return () => {
-      window.removeEventListener('resize', handleResize);
-      canvas.addEventListener('contextmenu', (event) => {
+      // window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+      canvas.removeEventListener('contextmenu', (event) => {
         event.preventDefault();
       });
     };
-  }, [canvasSize.width, canvasSize.height]);
+  }, [strokeHistory]);
 
+  // Painting logic
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctxt = canvas.getContext('2d');
-    // ctxt.fillStyle = '#000';
-    // Set the color of the canvas
+    function getCanvasPosition(e) {
+      const rect = canvas.getBoundingClientRect();
+      return [e.clientX - rect.left, e.clientY - rect.top];
+    }
 
     function startPosition(e) {
       if (e.button !== 0) return; // Only run when left click is pressed
       paintingRef.current = true;
-      ctxt.lineWidth = brushSize;
-      ctxt.fillStyle = brushColor;
+
+      // Cordinates of the mouse in the element
+      const [x, y] = getCanvasPosition(e);
+
+      // ctxt.lineWidth = brushSizeRef.current;
+      ctxt.fillStyle = brushColorRef.current;
       ctxt.beginPath();
-      // setStrokeHistory([strokeHistory.pop()]);
-      ctxt.arc(
-        e.clientX - toolbarWidth,
-        e.clientY,
-        ctxt.lineWidth / 2,
-        0,
-        Math.PI * 2
-      );
+      ctxt.arc(x, y, brushSizeRef.current / 2, 0, Math.PI * 2);
       ctxt.fill();
-      // Start a new path for subsequent drawing
+
       ctxt.beginPath();
-      ctxt.moveTo(e.clientX - toolbarWidth, e.clientY);
+      ctxt.moveTo(x, y);
     }
 
     function finishedPosition(e) {
@@ -125,14 +96,16 @@ function Canvas() {
 
     function draw(e) {
       if (!paintingRef.current) return;
-      ctxt.lineWidth = brushSize;
-      ctxt.strokeStyle = brushColor;
+      const [x, y] = getCanvasPosition(e);
+
+      ctxt.lineWidth = brushSizeRef.current;
+      ctxt.strokeStyle = brushColorRef.current;
       ctxt.lineCap = 'round';
 
-      ctxt.lineTo(e.clientX - toolbarWidth, e.clientY);
+      ctxt.lineTo(x, y);
       ctxt.stroke();
       ctxt.beginPath();
-      ctxt.moveTo(e.clientX - toolbarWidth, e.clientY);
+      ctxt.moveTo(x, y);
     }
 
     canvas.addEventListener('mousedown', startPosition);
@@ -145,7 +118,7 @@ function Canvas() {
       canvas.removeEventListener('mouseup', finishedPosition);
       canvas.removeEventListener('mousemove', draw);
     };
-  }, [brushSize, brushColor, canvasSize]);
+  }, [canvasSize]);
 
   // Update brush width dynamically without triggering re-renders
   function changeBrushSize(size) {
@@ -156,72 +129,81 @@ function Canvas() {
     setBrushColor(color);
   }
 
-  function clearCanvas() {
+  const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctxt = canvas.getContext('2d');
     ctxt.clearRect(0, 0, canvas.width, canvas.height);
-    saveToHistory();
-  }
+    const imageData = ctxt.getImageData(0, 0, canvas.width, canvas.height);
+    setStrokeHistory((prev) => [...prev, imageData]);
+  }, []);
 
   // Save the current canvas state to history using getImageData
-  function saveToHistory() {
+  const saveToHistory = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctxt = canvas.getContext('2d');
     // Capture the entire canvas
     const imageData = ctxt.getImageData(0, 0, canvas.width, canvas.height);
     setStrokeHistory((prev) => [...prev, imageData]);
-  }
+  }, []);
 
   // Undo: restore previous state from history using putImageData
-  function undo() {
-    const canvas = canvasRef.current;
-    if (!canvas || strokeHistory.length === 0) return;
-    const ctxt = canvas.getContext('2d');
-    // Remove the last stroke
+  const undo = useCallback(() => {
     setStrokeHistory((prev) => {
-      const newHistory = [...prev];
-      newHistory.pop();
-      // Clear the canvas and restore the previous state if it exists
-      ctxt.fillStyle = '#fff';
-      ctxt.fillRect(0, 0, canvas.width, canvas.height);
+      if (prev.length === 0) return prev;
+
+      const newHistory = prev.slice(0, -1);
+      const canvas = canvasRef.current;
+      if (!canvas) return newHistory;
+
+      const ctxt = canvas.getContext('2d');
+      ctxt.clearRect(0, 0, canvas.width, canvas.height);
+
       if (newHistory.length > 0) {
         ctxt.putImageData(newHistory[newHistory.length - 1], 0, 0);
       }
+
       return newHistory;
     });
-  }
+  }, []);
 
-  function saveDrawing() {
+  const saveDrawing = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dataURL = canvas.toDataURL();
     localStorage.setItem('savedDrawing', dataURL);
-  }
+  }, []);
 
-  function loadDrawing() {
+  const loadDrawing = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    clearCanvas();
+    // const imageData = ctxt.getImageData(0, 0, canvas.width, canvas.height);
     const ctxt = canvas.getContext('2d');
+    ctxt.clearRect(0, 0, canvas.width, canvas.height);
     const savedDrawing = localStorage.getItem('savedDrawing');
     if (savedDrawing) {
       const img = new Image();
       img.src = savedDrawing;
       img.onload = () => ctxt.drawImage(img, 0, 0);
     }
-    // saveToHistory();
-  }
+    saveToHistory();
+  }, [saveToHistory]);
 
-  function exportAsImage() {
+  const exportAsImage = useCallback(() => {
     const canvas = canvasRef.current;
     const dataURL = canvas.toDataURL('image/png');
     const link = document.createElement('a');
     link.href = dataURL;
     link.download = 'drawing.png';
     link.click();
-  }
+  }, []);
+  // // Resumes the users last saved drawing on launch
+  // useEffect(() => {
+  //   loadDrawing();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   return (
     <>
