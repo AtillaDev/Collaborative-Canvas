@@ -42,7 +42,7 @@
 } */
 
 .canvas-container {
-  /* overflow: hidden; */
+  overflow: hidden;
   display: block;
   position: relative;
   width: 100%;
@@ -51,7 +51,7 @@
   justify-content: center;
   align-items: center;
   /* scale: 10; */
-  background-color: #5e6463;
+  background-color: #2e323278;
 }
 
 canvas {
@@ -76,6 +76,7 @@ canvas {
   flex-direction: column;
   z-index: 100;
   padding: 20px;
+  border-right: 1px solid black;
   /* position: fixed; */
   /* height: 100vh; */
   top: 0;

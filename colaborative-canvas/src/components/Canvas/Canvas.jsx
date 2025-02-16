@@ -10,10 +10,10 @@ function Canvas() {
 
   // eslint-disable-next-line no-unused-vars
   const [strokeHistory, setStrokeHistory] = useState([]);
-  const [canvasSize, setCanvasSize] = useState({
-    width: 1300,
-    height: 1000,
-  });
+  // const [canvasSize, setCanvasSize] = useState({
+  //   width: 1300,
+  //   height: 1000,
+  // });
 
   // Refs for brush properties so the dom dosent update unecesaraly
   const brushSizeRef = useRef(brushSize);
@@ -26,15 +26,15 @@ function Canvas() {
   });
 
   // Add wheel handler for zooming
-  const handleWheel = useCallback((e) => {
-    e.preventDefault();
-    console.log('scroll');
-    const scaleChange = e.deltaY < 0 ? 1.1 : 0.9;
-    setTransform((prev) => ({
-      ...prev,
-      scale: prev.scale * scaleChange,
-    }));
-  }, []);
+  // const handleWheel = useCallback((e) => {
+  //   e.preventDefault();
+  //   console.log('scroll');
+  //   const scaleChange = e.deltaY < 0 ? 1.1 : 0.9;
+  //   setTransform((prev) => ({
+  //     ...prev,
+  //     scale: prev.scale * scaleChange,
+  //   }));
+  // }, []);
 
   useEffect(() => {
     brushSizeRef.current = brushSize;
@@ -80,21 +80,21 @@ function Canvas() {
     function getCanvasPosition(e) {
       const rect = canvas.getBoundingClientRect();
       return [
-        (e.clientX - rect.left - transform.x) / transform.scale,
-        (e.clientY - rect.top - transform.y) / transform.scale,
+        (e.clientX - rect.left) / transform.scale,
+        (e.clientY - rect.top) / transform.scale,
       ];
     }
 
-    function applyTransform() {
-      ctxt.setTransform(
-        transform.scale,
-        0,
-        0,
-        transform.scale,
-        transform.x,
-        transform.y
-      );
-    }
+    // function applyTransform() {
+    //   ctxt.setTransform(
+    //     transform.scale,
+    //     0,
+    //     0,
+    //     transform.scale,
+    //     transform.x,
+    //     transform.y
+    //   );
+    // }
 
     function startPosition(e) {
       if (e.button !== 0) return; // Only run when left click is pressed
@@ -123,7 +123,7 @@ function Canvas() {
 
     function draw(e) {
       if (!paintingRef.current) return;
-      applyTransform();
+      // applyTransform();
       const [x, y] = getCanvasPosition(e);
 
       ctxt.lineWidth = brushSizeRef.current;
@@ -149,7 +149,7 @@ function Canvas() {
       canvas.removeEventListener('mouseup', finishedPosition);
       canvas.removeEventListener('mousemove', draw);
     };
-  }, [handleWheel, transform]);
+  }, [transform]);
 
   // Update brush width dynamically without triggering re-renders
   function changeBrushSize(size) {
@@ -240,6 +240,15 @@ function Canvas() {
     });
   }, []);
 
+  const zoomOut = useCallback(() => {
+    setTransform((prev) => {
+      return {
+        ...prev,
+        scale: prev.scale - 0.1,
+      };
+    });
+  }, []);
+
   // // Resumes the users last saved drawing on launch
   // useEffect(() => {
   // loadDrawing();
@@ -258,7 +267,8 @@ function Canvas() {
         onClearCanvas={clearCanvas}
         onUndo={undo} // Add Undo button
         onExport={exportAsImage} // Download data for current drawing
-        onZoom={zoomIn}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
       />
       <div
         className="canvas-container"

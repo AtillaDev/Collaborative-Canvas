@@ -10,7 +10,8 @@ function Toolbar({
   onSave,
   onLoad,
   onExport,
-  onZoom,
+  onZoomIn,
+  onZoomOut,
 }) {
   return (
     <div className="toolbar" style={{ padding: '10px', background: '#ccc' }}>
@@ -63,8 +64,11 @@ function Toolbar({
         Export
       </button>
 
-      <button onClick={onZoom} type="button">
-        Zoom in
+      <button onClick={onZoomIn} type="button">
+        Zoom In
+      </button>
+      <button onClick={onZoomOut} type="button">
+        Zoom Out
       </button>
     </div>
   );
@@ -83,7 +87,8 @@ Toolbar.propTypes = {
   onSave: PropTypes.func.isRequired,
 
   onExport: PropTypes.func.isRequired,
-  onZoom: PropTypes.func.isRequired,
+  onZoomIn: PropTypes.func.isRequired,
+  onZoomOut: PropTypes.func.isRequired,
 };
 
 export default Toolbar;
