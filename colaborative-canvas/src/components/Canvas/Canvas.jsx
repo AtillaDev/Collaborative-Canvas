@@ -85,16 +85,8 @@ function Canvas() {
       ];
     }
 
-    // function applyTransform() {
-    //   ctxt.setTransform(
-    //     transform.scale,
-    //     0,
-    //     0,
-    //     transform.scale,
-    //     transform.x,
-    //     transform.y
-    //   );
-    // }
+    // Points for smothing drawed strokes
+    let points = [];
 
     function startPosition(e) {
       if (e.button !== 0) return; // Only run when left click is pressed
@@ -116,28 +108,63 @@ function Canvas() {
     function finishedPosition(e) {
       ctxt.stroke();
       ctxt.closePath();
+      // Clear points after finishing the stroke
+      points = [];
       paintingRef.current = false;
 
       e.preventDefault();
     }
 
+    // function draw(e) {
+    //   if (!paintingRef.current) return;
+
+    //   const [x, y] = getCanvasPosition(e);
+
+    //   ctxt.lineWidth = brushSizeRef.current;
+    //   ctxt.strokeStyle = brushColorRef.current;
+    //   ctxt.lineJoin = 'round';
+    //   ctxt.lineCap = 'round';
+
+    //   ctxt.lineTo(x, y);
+    //   ctxt.stroke();
+    //   ctxt.beginPath();
+    //   ctxt.moveTo(x, y);
+    // }
+
+    // canvas.addEventListener('wheel', handleWheel);
+
     function draw(e) {
       if (!paintingRef.current) return;
-      // applyTransform();
-      const [x, y] = getCanvasPosition(e);
+      const [xMouse, yMouse] = getCanvasPosition(e);
+
+      // Add current point
+      points.push({ x: xMouse, y: yMouse });
+
+      // For quadratic curves, we need at least 3 points
+      if (points.length < 3) return;
+
+      // Get the last three points
+      const p0 = points[points.length - 3];
+      const p1 = points[points.length - 2];
+      const p2 = points[points.length - 1];
+
+      // Calculate midpoints for smoother curve
+      const mid1 = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+      const mid2 = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
 
       ctxt.lineWidth = brushSizeRef.current;
       ctxt.strokeStyle = brushColorRef.current;
       ctxt.lineJoin = 'round';
       ctxt.lineCap = 'round';
 
-      ctxt.lineTo(x, y);
-      ctxt.stroke();
       ctxt.beginPath();
-      ctxt.moveTo(x, y);
+      // Start from the first midpoint
+      ctxt.moveTo(mid1.x, mid1.y);
+      // Draw quadratic curve using p1 as the control point, ending at the next midpoint
+      ctxt.quadraticCurveTo(p1.x, p1.y, mid2.x, mid2.y);
+      ctxt.stroke();
     }
 
-    // canvas.addEventListener('wheel', handleWheel);
     canvas.addEventListener('mousedown', startPosition);
     canvas.addEventListener('mouseup', finishedPosition);
     canvas.addEventListener('mousemove', draw);
