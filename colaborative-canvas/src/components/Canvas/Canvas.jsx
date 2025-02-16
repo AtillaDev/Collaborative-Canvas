@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Toolbar from '../Toolbar/Toolbar';
 
 function Canvas() {
+  const workspaceRef = useRef(null);
   const canvasRef = useRef(null);
   const paintingRef = useRef(false);
 
@@ -26,15 +27,15 @@ function Canvas() {
   });
 
   // Add wheel handler for zooming
-  // const handleWheel = useCallback((e) => {
-  //   e.preventDefault();
-  //   console.log('scroll');
-  //   const scaleChange = e.deltaY < 0 ? 1.1 : 0.9;
-  //   setTransform((prev) => ({
-  //     ...prev,
-  //     scale: prev.scale * scaleChange,
-  //   }));
-  // }, []);
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    console.log('scroll');
+    const scaleChange = e.deltaY < 0 ? 1.1 : 0.9;
+    setTransform((prev) => ({
+      ...prev,
+      scale: prev.scale * scaleChange,
+    }));
+  }, []);
 
   useEffect(() => {
     brushSizeRef.current = brushSize;
@@ -73,6 +74,7 @@ function Canvas() {
   // Painting logic
   useEffect(() => {
     const canvas = canvasRef.current;
+    const workspace = workspaceRef.current;
     if (!canvas) return;
 
     const ctxt = canvas.getContext('2d');
@@ -131,8 +133,7 @@ function Canvas() {
     //   ctxt.moveTo(x, y);
     // }
 
-    // canvas.addEventListener('wheel', handleWheel);
-
+    // Draw using smooth lines
     function draw(e) {
       if (!paintingRef.current) return;
       const [xMouse, yMouse] = getCanvasPosition(e);
@@ -165,18 +166,19 @@ function Canvas() {
       ctxt.stroke();
     }
 
+    workspace.addEventListener('wheel', handleWheel);
     canvas.addEventListener('mousedown', startPosition);
     canvas.addEventListener('mouseup', finishedPosition);
     canvas.addEventListener('mousemove', draw);
 
     // Cleanup function: remove event listeners on unmount
     return () => {
-      // canvas.removeEventListener('wheel', handleWheel);
+      workspace.removeEventListener('wheel', handleWheel);
       canvas.removeEventListener('mousedown', startPosition);
       canvas.removeEventListener('mouseup', finishedPosition);
       canvas.removeEventListener('mousemove', draw);
     };
-  }, [transform]);
+  }, [transform, handleWheel]);
 
   // Update brush width dynamically without triggering re-renders
   function changeBrushSize(size) {
@@ -298,7 +300,8 @@ function Canvas() {
         onZoomOut={zoomOut}
       />
       <div
-        className="canvas-container"
+        className="workspace"
+        ref={workspaceRef}
         // width={canvasSize.width}
         // onWheel={handleWheel}
         // height={canvasSize.height}
