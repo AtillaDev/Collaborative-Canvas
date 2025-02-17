@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useCallback, useState } from 'react';
 
 function Toolbar({
   brushSize,
@@ -12,10 +13,109 @@ function Toolbar({
   onExport,
   onZoomIn,
   onZoomOut,
+  canvasSize,
+  onResizeWidth,
+  onResizeHeight,
 }) {
+  const [resizeWidthInput, setResizeWidthInput] = useState(canvasSize.width);
+  const [resizeHeightInput, setResizeHeightInput] = useState(canvasSize.height);
+
+  const handleEnter = useCallback((e, value, setValue) => {
+    // Allow: numbers (0-9), backspace, delete, arrow keys, enter, and one dot (.)
+    if (
+      !/[\d]/.test(e.key) && // Allow digits
+      ![
+        'Backspace',
+        'Delete',
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Enter',
+      ].includes(e.key) &&
+      e.key !== '.' // Allow a single decimal point
+    ) {
+      e.preventDefault();
+    }
+
+    // Prevent multiple dots
+    if (e.key === '.' && e.target.value.includes('.')) {
+      e.preventDefault();
+    }
+
+    if (e.key === 'Enter' && value) {
+      // Clear zeros in frot of the number like 0100 = 100
+      e.target.value = value;
+      setValue(value);
+    }
+  }, []);
+
   return (
     <div className="toolbar" style={{ padding: '10px', background: '#ccc' }}>
-      {/* Brush size slider */}
+      {/* FIXME make input values refactor themselves after the user
+       presses enter rather then during he types. Example input is 10 100 after the user 
+       presses enter it should then be changed to 10 000*/}
+      <div className="resize-width-wrapper">
+        <label htmlFor="resizeWidth">Canvas Width:</label>
+        <input
+          className="canvas-resize-input"
+          type="number"
+          id="resizeWidth"
+          value={resizeWidthInput}
+          onChange={(e) => {
+            const newValue = Math.abs(Number(e.target.value));
+            // Dont change value to 0 after second . is added
+            if (/^\d*\.?\d*$/.test(newValue)) {
+              if (!newValue) {
+                setResizeWidthInput(1);
+              } else if (newValue >= 10000) {
+                setResizeWidthInput(10000);
+              } else {
+                setResizeWidthInput(newValue);
+              }
+            }
+          }}
+          // On Unfocus
+          onBlur={(e) => {
+            onResizeWidth(resizeWidthInput);
+            e.target.value = canvasSize.width;
+          }}
+          onKeyDown={(e) => {
+            handleEnter(e, resizeWidthInput, onResizeWidth);
+          }}
+        />
+      </div>
+      <div className="resize-height-wrapper">
+        <label htmlFor="resizeHeight">Canvas Height:</label>
+        <input
+          className="canvas-resize-input"
+          type="number"
+          id="resizeHeight"
+          value={resizeHeightInput}
+          onChange={(e) => {
+            const newValue = Math.abs(Number(e.target.value));
+            // Dont change value to 0 after second . is added
+            if (/^\d*\.?\d*$/.test(newValue)) {
+              if (!newValue) {
+                setResizeHeightInput(1);
+              } else if (newValue >= 10000) {
+                setResizeHeightInput(10000);
+              } else {
+                setResizeHeightInput(newValue);
+              }
+            }
+          }}
+          // On Unfocus
+          onBlur={(e) => {
+            onResizeHeight(resizeHeightInput);
+            e.target.value = canvasSize.height;
+          }}
+          onKeyDown={(e) => {
+            handleEnter(e, resizeHeightInput, onResizeHeight);
+          }}
+        />
+      </div>
+
       <label htmlFor="brushSize" className="brush-size-slider-label">
         Brush Size: {brushSize}
       </label>
@@ -89,6 +189,10 @@ Toolbar.propTypes = {
   onExport: PropTypes.func.isRequired,
   onZoomIn: PropTypes.func.isRequired,
   onZoomOut: PropTypes.func.isRequired,
+
+  canvasSize: PropTypes.object.isRequired,
+  onResizeWidth: PropTypes.func.isRequired,
+  onResizeHeight: PropTypes.func.isRequired,
 };
 
 export default Toolbar;

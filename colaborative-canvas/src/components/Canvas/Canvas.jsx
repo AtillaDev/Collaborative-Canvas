@@ -71,7 +71,6 @@ function Canvas() {
   //   };
   // }, []);
 
-  // FIXME The starting dot sometimes dosent connect with the rest of the brush stroke
   // Painting logic
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -119,22 +118,6 @@ function Canvas() {
       e.preventDefault();
     }
 
-    // function draw(e) {
-    //   if (!paintingRef.current) return;
-
-    //   const [x, y] = getCanvasPosition(e);
-
-    //   ctxt.lineWidth = brushSizeRef.current;
-    //   ctxt.strokeStyle = brushColorRef.current;
-    //   ctxt.lineJoin = 'round';
-    //   ctxt.lineCap = 'round';
-
-    //   ctxt.lineTo(x, y);
-    //   ctxt.stroke();
-    //   ctxt.beginPath();
-    //   ctxt.moveTo(x, y);
-    // }
-
     // Draw using smooth lines
     function draw(e) {
       if (!paintingRef.current) return;
@@ -167,6 +150,22 @@ function Canvas() {
       ctxt.quadraticCurveTo(p1.x, p1.y, mid2.x, mid2.y);
       ctxt.stroke();
     }
+
+    // function draw(e) {
+    //   if (!paintingRef.current) return;
+
+    //   const [x, y] = getCanvasPosition(e);
+
+    //   ctxt.lineWidth = brushSizeRef.current;
+    //   ctxt.strokeStyle = brushColorRef.current;
+    //   ctxt.lineJoin = 'round';
+    //   ctxt.lineCap = 'round';
+
+    //   ctxt.lineTo(x, y);
+    //   ctxt.stroke();
+    //   ctxt.beginPath();
+    //   ctxt.moveTo(x, y);
+    // }
 
     workspace.addEventListener('wheel', handleWheel);
     canvas.addEventListener('mousedown', startPosition);
@@ -280,11 +279,34 @@ function Canvas() {
     });
   }, []);
 
-  // // Resumes the users last saved drawing on launch
-  // useEffect(() => {
-  // loadDrawing();
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
+  function resizeWidth(widthForResize) {
+    // if (widthForResize >= 10) {
+    setCanvasSize((prev) => {
+      if (widthForResize >= 10 && canvasSize.height >= 10) {
+        loadDrawing();
+      }
+      if (widthForResize) {
+        return { ...prev, width: widthForResize };
+      }
+    });
+    // }
+  }
+
+  function resizeHeight(heightForResize) {
+    setCanvasSize((prev) => {
+      if (heightForResize >= 10 && canvasSize.width >= 10) {
+        loadDrawing();
+      }
+      if (heightForResize) {
+        return { ...prev, height: heightForResize };
+      }
+    });
+  }
+
+  // Resumes the users last saved drawing on launch
+  useEffect(() => {
+    loadDrawing();
+  }, [loadDrawing]);
 
   return (
     <>
@@ -300,6 +322,9 @@ function Canvas() {
         onExport={exportAsImage} // Download data for current drawing
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
+        canvasSize={canvasSize}
+        onResizeWidth={resizeWidth}
+        onResizeHeight={resizeHeight}
       />
       <div
         className="workspace"
@@ -313,7 +338,11 @@ function Canvas() {
           id="canvas"
           aria-label="Drawing canvas" // Save to history on mouseup (final stroke)
           onMouseUp={saveToHistory}
-          style={{ scale: transform.scale }}
+          style={{
+            scale: transform.scale,
+            width: canvasSize.width / 2,
+            height: canvasSize.height / 2,
+          }}
           width={canvasSize.width}
           height={canvasSize.height}
           // width={500}
