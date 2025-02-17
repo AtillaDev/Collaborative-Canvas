@@ -45,14 +45,20 @@ function Toolbar({
 
     if (e.key === 'Enter' && value) {
       // Clear zeros in frot of the number like 0100 = 100
-      e.target.value = value;
+      if (!value) {
+        e.target.value = 1;
+      } else if (value >= 10000) {
+        e.target.value = 10000;
+      } else {
+        e.target.value = value;
+      }
+
       setValue(value);
     }
   }, []);
-
   return (
     <div className="toolbar" style={{ padding: '10px', background: '#ccc' }}>
-      {/* FIXME make input values refactor themselves after the user
+      {/* FIXME: make input values refactor themselves after the user
        presses enter rather then during he types. Example input is 10 100 after the user 
        presses enter it should then be changed to 10 000*/}
       <div className="resize-width-wrapper">
@@ -66,13 +72,7 @@ function Toolbar({
             const newValue = Math.abs(Number(e.target.value));
             // Dont change value to 0 after second . is added
             if (/^\d*\.?\d*$/.test(newValue)) {
-              if (!newValue) {
-                setResizeWidthInput(1);
-              } else if (newValue >= 10000) {
-                setResizeWidthInput(10000);
-              } else {
-                setResizeWidthInput(newValue);
-              }
+              setResizeWidthInput(newValue);
             }
           }}
           // On Unfocus
@@ -96,13 +96,7 @@ function Toolbar({
             const newValue = Math.abs(Number(e.target.value));
             // Dont change value to 0 after second . is added
             if (/^\d*\.?\d*$/.test(newValue)) {
-              if (!newValue) {
-                setResizeHeightInput(1);
-              } else if (newValue >= 10000) {
-                setResizeHeightInput(10000);
-              } else {
-                setResizeHeightInput(newValue);
-              }
+              setResizeHeightInput(newValue);
             }
           }}
           // On Unfocus

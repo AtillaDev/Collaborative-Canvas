@@ -300,6 +300,15 @@ function Canvas() {
       if (heightForResize) {
         return { ...prev, height: heightForResize };
       }
+      //
+      //REVIEW: IF  BUG WITH RESIZING IS FOUND CHECK THIS OUT
+      // if (!heightForResize) {
+      //   return { ...prev, height: 1 };
+      // } else if (heightForResize >= 10000) {
+      //   return { ...prev, height: 10000 };
+      // } else {
+      //   return { ...prev, height: heightForResize };
+      // }
     });
   }
 
