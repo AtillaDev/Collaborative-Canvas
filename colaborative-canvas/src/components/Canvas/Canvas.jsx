@@ -11,10 +11,10 @@ function Canvas() {
 
   // eslint-disable-next-line no-unused-vars
   const [strokeHistory, setStrokeHistory] = useState([]);
-  // const [canvasSize, setCanvasSize] = useState({
-  //   width: 1300,
-  //   height: 1000,
-  // });
+  const [canvasSize, setCanvasSize] = useState({
+    width: 1000,
+    height: 1000,
+  });
 
   // Refs for brush properties so the dom dosent update unecesaraly
   const brushSizeRef = useRef(brushSize);
@@ -71,6 +71,7 @@ function Canvas() {
   //   };
   // }, []);
 
+  // FIXME The starting dot sometimes dosent connect with the rest of the brush stroke
   // Painting logic
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -82,8 +83,8 @@ function Canvas() {
     function getCanvasPosition(e) {
       const rect = canvas.getBoundingClientRect();
       return [
-        (e.clientX - rect.left) / transform.scale,
-        (e.clientY - rect.top) / transform.scale,
+        ((e.clientX - rect.left) / transform.scale) * 2,
+        ((e.clientY - rect.top) / transform.scale) * 2,
       ];
     }
 
@@ -95,16 +96,17 @@ function Canvas() {
       paintingRef.current = true;
 
       // Cordinates of the mouse in the element
-      const [x, y] = getCanvasPosition(e);
+      const [xMouse, yMouse] = getCanvasPosition(e);
 
+      draw(e);
       // ctxt.lineWidth = brushSizeRef.current;
       ctxt.fillStyle = brushColorRef.current;
       ctxt.beginPath();
-      ctxt.arc(x, y, brushSizeRef.current / 2, 0, Math.PI * 2);
+      ctxt.arc(xMouse, yMouse, brushSizeRef.current / 2, 0, Math.PI * 2);
       ctxt.fill();
 
       ctxt.beginPath();
-      ctxt.moveTo(x, y);
+      ctxt.moveTo(xMouse, yMouse);
     }
 
     function finishedPosition(e) {
@@ -312,10 +314,10 @@ function Canvas() {
           aria-label="Drawing canvas" // Save to history on mouseup (final stroke)
           onMouseUp={saveToHistory}
           style={{ scale: transform.scale }}
-          // width={canvasSize.width}
-          // height={canvasSize.height}
-          width={500}
-          height={500}
+          width={canvasSize.width}
+          height={canvasSize.height}
+          // width={500}
+          // height={500}
         />
       </div>
     </>
