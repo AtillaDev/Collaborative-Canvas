@@ -9,7 +9,6 @@ function Canvas() {
   const [brushSize, setBrushSize] = useState(10);
   const [brushColor, setBrushColor] = useState('#000');
 
-  // eslint-disable-next-line no-unused-vars
   const [strokeHistory, setStrokeHistory] = useState([]);
   const [canvasSize, setCanvasSize] = useState({
     width: 1000,
@@ -29,7 +28,6 @@ function Canvas() {
   // Add wheel handler for zooming
   const handleWheel = useCallback((e) => {
     e.preventDefault();
-    console.log('scroll');
     const scaleChange = e.deltaY < 0 ? 1.1 : 0.9;
     setTransform((prev) => ({
       ...prev,
@@ -96,7 +94,7 @@ function Canvas() {
 
       // Cordinates of the mouse in the element
       const [xMouse, yMouse] = getCanvasPosition(e);
-
+      points.push({ x: xMouse, y: yMouse });
       draw(e);
       // ctxt.lineWidth = brushSizeRef.current;
       ctxt.fillStyle = brushColorRef.current;
@@ -151,6 +149,7 @@ function Canvas() {
       ctxt.stroke();
     }
 
+    // Regular draw
     // function draw(e) {
     //   if (!paintingRef.current) return;
 
@@ -280,27 +279,54 @@ function Canvas() {
   }, []);
 
   function resizeWidth(widthForResize) {
-    // if (widthForResize >= 10) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctxt = canvas.getContext('2d');
+
+    // Capture the current canvas as an image
+    const dataURL = canvas.toDataURL();
+
     setCanvasSize((prev) => {
-      if (widthForResize >= 10 && canvasSize.height >= 10) {
+      if (strokeHistory <= 2) {
         loadDrawing();
       }
       if (widthForResize) {
         return { ...prev, width: widthForResize };
       }
     });
-    // }
+
+    // Use a timeout to wait for the canvas to resize
+    setTimeout(() => {
+      // Clear the canvas
+      ctxt.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Load the last saved history state or the captured image
+      if (strokeHistory.length > 2) {
+        ctxt.putImageData(strokeHistory[strokeHistory.length - 1], 0, 0);
+      } else {
+        const img = new Image();
+        img.src = dataURL;
+        img.onload = () => ctxt.drawImage(img, 0, 0);
+      }
+    }, 0);
   }
 
   function resizeHeight(heightForResize) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctxt = canvas.getContext('2d');
+
+    // Capture the current canvas as an image
+    const dataURL = canvas.toDataURL();
+
     setCanvasSize((prev) => {
-      if (heightForResize >= 10 && canvasSize.width >= 10) {
+      if (strokeHistory <= 2) {
         loadDrawing();
       }
       if (heightForResize) {
         return { ...prev, height: heightForResize };
       }
-      //
+
       //REVIEW: IF  BUG WITH RESIZING IS FOUND CHECK THIS OUT
       // if (!heightForResize) {
       //   return { ...prev, height: 1 };
@@ -310,6 +336,22 @@ function Canvas() {
       //   return { ...prev, height: heightForResize };
       // }
     });
+
+    // Use a timeout to wait for the canvas to resize
+
+    setTimeout(() => {
+      // Clear the canvas
+      ctxt.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Load the last saved history state or the captured image
+      if (strokeHistory.length > 2) {
+        ctxt.putImageData(strokeHistory[strokeHistory.length - 1], 0, 0);
+      } else {
+        const img = new Image();
+        img.src = dataURL;
+        img.onload = () => ctxt.drawImage(img, 0, 0);
+      }
+    }, 0);
   }
 
   // Resumes the users last saved drawing on launch

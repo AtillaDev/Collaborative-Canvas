@@ -20,7 +20,7 @@ function Toolbar({
   const [resizeWidthInput, setResizeWidthInput] = useState(canvasSize.width);
   const [resizeHeightInput, setResizeHeightInput] = useState(canvasSize.height);
 
-  const handleEnter = useCallback((e, value, setValue) => {
+  const handleEnter = useCallback((e) => {
     // Allow: numbers (0-9), backspace, delete, arrow keys, enter, and one dot (.)
     if (
       !/[\d]/.test(e.key) && // Allow digits
@@ -43,24 +43,24 @@ function Toolbar({
       e.preventDefault();
     }
 
-    if (e.key === 'Enter' && value) {
+    if (e.key === 'Enter') {
       // Clear zeros in frot of the number like 0100 = 100
-      if (!value) {
-        e.target.value = 1;
-      } else if (value >= 10000) {
-        e.target.value = 10000;
-      } else {
-        e.target.value = value;
-      }
+      // if (!value) {
+      //   setInputValue(1);
+      // } else if (value >= 10000) {
+      //   setInputValue(10000);
+      //   setValue(10000);
+      // } else {
+      //   setInputValue(value);
+      // }
 
-      setValue(value);
+      e.target.blur();
+
+      // setValue(value);
     }
   }, []);
   return (
     <div className="toolbar" style={{ padding: '10px', background: '#ccc' }}>
-      {/* FIXME: make input values refactor themselves after the user
-       presses enter rather then during he types. Example input is 10 100 after the user 
-       presses enter it should then be changed to 10 000*/}
       <div className="resize-width-wrapper">
         <label htmlFor="resizeWidth">Canvas Width:</label>
         <input
@@ -76,12 +76,20 @@ function Toolbar({
             }
           }}
           // On Unfocus
-          onBlur={(e) => {
-            onResizeWidth(resizeWidthInput);
-            e.target.value = canvasSize.width;
+          onBlur={() => {
+            if (!resizeWidthInput) {
+              setResizeWidthInput(1);
+              onResizeWidth(1);
+            } else if (resizeWidthInput >= 10000) {
+              setResizeWidthInput(10000);
+              onResizeWidth(10000);
+            } else {
+              setResizeWidthInput(resizeWidthInput);
+              onResizeWidth(resizeWidthInput);
+            }
           }}
           onKeyDown={(e) => {
-            handleEnter(e, resizeWidthInput, onResizeWidth);
+            handleEnter(e);
           }}
         />
       </div>
@@ -100,12 +108,20 @@ function Toolbar({
             }
           }}
           // On Unfocus
-          onBlur={(e) => {
-            onResizeHeight(resizeHeightInput);
-            e.target.value = canvasSize.height;
+          onBlur={() => {
+            if (!resizeHeightInput) {
+              setResizeHeightInput(1);
+              onResizeHeight(1);
+            } else if (resizeHeightInput >= 10000) {
+              setResizeHeightInput(10000);
+              onResizeHeight(10000);
+            } else {
+              setResizeHeightInput(resizeHeightInput);
+              onResizeHeight(resizeHeightInput);
+            }
           }}
           onKeyDown={(e) => {
-            handleEnter(e, resizeHeightInput, onResizeHeight);
+            handleEnter(e);
           }}
         />
       </div>
