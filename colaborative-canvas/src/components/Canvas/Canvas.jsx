@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Toolbar from '../Toolbar/Toolbar';
+// TODO: add pan functionality to the workspace
 
 function Canvas() {
   const workspaceRef = useRef(null);
@@ -24,6 +25,8 @@ function Canvas() {
     x: 0,
     y: 0,
   });
+  const isDragging = useRef(false);
+  const lastPosition = useRef({ x: 0, y: 0 });
 
   // Add wheel handler for zooming
   const handleWheel = useCallback((e) => {
@@ -80,8 +83,10 @@ function Canvas() {
     function getCanvasPosition(e) {
       const rect = canvas.getBoundingClientRect();
       return [
-        ((e.clientX - rect.left) / transform.scale) * 2,
-        ((e.clientY - rect.top) / transform.scale) * 2,
+        ((e.clientX - rect.left) * 2) / transform.scale,
+        ((e.clientY - rect.top) * 2) / transform.scale,
+        // ((e.clientX - rect.left - transform.y) * 2) / transform.scale,
+        // ((e.clientY - rect.top - transform.x) * 2) / transform.scale,
       ];
     }
 
@@ -93,7 +98,9 @@ function Canvas() {
       paintingRef.current = true;
 
       // Cordinates of the mouse in the element
-      const [xMouse, yMouse] = getCanvasPosition(e);
+      let [xMouse, yMouse] = getCanvasPosition(e);
+      // xMouse = xMouse + transform.x;
+      // yMouse = yMouse + transform.y;
       points.push({ x: xMouse, y: yMouse });
       draw(e);
       // ctxt.lineWidth = brushSizeRef.current;
@@ -119,8 +126,9 @@ function Canvas() {
     // Draw using smooth lines
     function draw(e) {
       if (!paintingRef.current) return;
-      const [xMouse, yMouse] = getCanvasPosition(e);
-
+      let [xMouse, yMouse] = getCanvasPosition(e);
+      // xMouse = xMouse + transform.x;
+      // yMouse = yMouse + transform.y;
       // Add current point
       points.push({ x: xMouse, y: yMouse });
 
@@ -354,6 +362,31 @@ function Canvas() {
     }, 0);
   }
 
+  const startPan = (e) => {
+    if (e.button !== 1) return;
+    isDragging.current = true;
+    lastPosition.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const stopPan = () => {
+    isDragging.current = false;
+  };
+
+  const panCanvas = (e) => {
+    if (!isDragging.current) return;
+
+    const dx = e.clientX - lastPosition.current.x;
+    const dy = e.clientY - lastPosition.current.y;
+
+    setTransform((prev) => ({
+      ...prev,
+      x: prev.x + dx,
+      y: prev.y + dy,
+    }));
+
+    lastPosition.current = { x: e.clientX, y: e.clientY };
+  };
+
   // Resumes the users last saved drawing on launch
   useEffect(() => {
     loadDrawing();
@@ -383,6 +416,10 @@ function Canvas() {
         // width={canvasSize.width}
         // onWheel={handleWheel}
         // height={canvasSize.height}
+        onMouseDown={startPan} // Start panning on middle mouse
+        onMouseUp={stopPan} // Stop panning
+        onMouseLeave={stopPan} // Stop panning when leaving workspace
+        onMouseMove={panCanvas} // Move the canvas
       >
         <canvas
           ref={canvasRef}
@@ -390,9 +427,9 @@ function Canvas() {
           aria-label="Drawing canvas" // Save to history on mouseup (final stroke)
           onMouseUp={saveToHistory}
           style={{
-            scale: transform.scale,
             width: canvasSize.width / 2,
             height: canvasSize.height / 2,
+            transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
           }}
           width={canvasSize.width}
           height={canvasSize.height}
