@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Toolbar from '../Toolbar/Toolbar';
-// TODO: add pan functionality to the workspace
+// TODO: Create collaboration support and a better undo system
 
 function Canvas() {
   const workspaceRef = useRef(null);
@@ -12,8 +12,8 @@ function Canvas() {
 
   const [strokeHistory, setStrokeHistory] = useState([]);
   const [canvasSize, setCanvasSize] = useState({
-    width: 1000,
-    height: 1000,
+    width: 1920,
+    height: 1080,
   });
 
   // Refs for brush properties so the dom dosent update unecesaraly
@@ -189,13 +189,13 @@ function Canvas() {
   }, [transform, handleWheel]);
 
   // Update brush width dynamically without triggering re-renders
-  function changeBrushSize(size) {
+  const changeBrushSize = useCallback((size) => {
     setBrushSize(size);
-  }
+  }, []);
 
-  function changeBrushColor(color) {
+  const changeBrushColor = useCallback((color) => {
     setBrushColor(color);
-  }
+  }, []);
 
   const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -286,81 +286,87 @@ function Canvas() {
     });
   }, []);
 
-  function resizeWidth(widthForResize) {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctxt = canvas.getContext('2d');
+  const resizeWidth = useCallback(
+    (widthForResize) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctxt = canvas.getContext('2d');
 
-    // Capture the current canvas as an image
-    const dataURL = canvas.toDataURL();
+      // Capture the current canvas as an image
+      const dataURL = canvas.toDataURL();
 
-    setCanvasSize((prev) => {
-      if (strokeHistory <= 2) {
-        loadDrawing();
-      }
-      if (widthForResize) {
-        return { ...prev, width: widthForResize };
-      }
-    });
+      setCanvasSize((prev) => {
+        if (strokeHistory <= 2) {
+          loadDrawing();
+        }
+        if (widthForResize) {
+          return { ...prev, width: widthForResize };
+        }
+      });
 
-    // Use a timeout to wait for the canvas to resize
-    setTimeout(() => {
-      // Clear the canvas
-      ctxt.clearRect(0, 0, canvas.width, canvas.height);
+      // Use a timeout to wait for the canvas to resize
+      setTimeout(() => {
+        // Clear the canvas
+        ctxt.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Load the last saved history state or the captured image
-      if (strokeHistory.length > 2) {
-        ctxt.putImageData(strokeHistory[strokeHistory.length - 1], 0, 0);
-      } else {
-        const img = new Image();
-        img.src = dataURL;
-        img.onload = () => ctxt.drawImage(img, 0, 0);
-      }
-    }, 0);
-  }
+        // Load the last saved history state or the captured image
+        if (strokeHistory.length > 2) {
+          ctxt.putImageData(strokeHistory[strokeHistory.length - 1], 0, 0);
+        } else {
+          const img = new Image();
+          img.src = dataURL;
+          img.onload = () => ctxt.drawImage(img, 0, 0);
+        }
+      }, 0);
+    },
+    [loadDrawing, strokeHistory]
+  );
 
-  function resizeHeight(heightForResize) {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctxt = canvas.getContext('2d');
+  const resizeHeight = useCallback(
+    (heightForResize) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctxt = canvas.getContext('2d');
 
-    // Capture the current canvas as an image
-    const dataURL = canvas.toDataURL();
+      // Capture the current canvas as an image
+      const dataURL = canvas.toDataURL();
 
-    setCanvasSize((prev) => {
-      if (strokeHistory <= 2) {
-        loadDrawing();
-      }
-      if (heightForResize) {
-        return { ...prev, height: heightForResize };
-      }
+      setCanvasSize((prev) => {
+        if (strokeHistory <= 2) {
+          loadDrawing();
+        }
+        if (heightForResize) {
+          return { ...prev, height: heightForResize };
+        }
 
-      //REVIEW: IF  BUG WITH RESIZING IS FOUND CHECK THIS OUT
-      // if (!heightForResize) {
-      //   return { ...prev, height: 1 };
-      // } else if (heightForResize >= 10000) {
-      //   return { ...prev, height: 10000 };
-      // } else {
-      //   return { ...prev, height: heightForResize };
-      // }
-    });
+        //REVIEW: IF  BUG WITH RESIZING IS FOUND CHECK THIS OUT
+        // if (!heightForResize) {
+        //   return { ...prev, height: 1 };
+        // } else if (heightForResize >= 10000) {
+        //   return { ...prev, height: 10000 };
+        // } else {
+        //   return { ...prev, height: heightForResize };
+        // }
+      });
 
-    // Use a timeout to wait for the canvas to resize
+      // Use a timeout to wait for the canvas to resize
 
-    setTimeout(() => {
-      // Clear the canvas
-      ctxt.clearRect(0, 0, canvas.width, canvas.height);
+      setTimeout(() => {
+        // Clear the canvas
+        ctxt.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Load the last saved history state or the captured image
-      if (strokeHistory.length > 2) {
-        ctxt.putImageData(strokeHistory[strokeHistory.length - 1], 0, 0);
-      } else {
-        const img = new Image();
-        img.src = dataURL;
-        img.onload = () => ctxt.drawImage(img, 0, 0);
-      }
-    }, 0);
-  }
+        // Load the last saved history state or the captured image
+        if (strokeHistory.length > 2) {
+          ctxt.putImageData(strokeHistory[strokeHistory.length - 1], 0, 0);
+        } else {
+          const img = new Image();
+          img.src = dataURL;
+          img.onload = () => ctxt.drawImage(img, 0, 0);
+        }
+      }, 0);
+    },
+    [loadDrawing, strokeHistory]
+  );
 
   const startPan = (e) => {
     if (e.button !== 1) return;
